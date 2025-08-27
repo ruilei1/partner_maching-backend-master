@@ -23,6 +23,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Cookie;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -54,7 +56,7 @@ public class UserController {
      * 用户注册
      *
      * @param userRegisterRequest
-     * @return
+     * @return result
      */
     @PostMapping("/register")
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest) {
@@ -81,7 +83,8 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request) {
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request, 
+                                        HttpServletResponse response) {
         if (userLoginRequest == null) {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR);
         }
@@ -91,8 +94,29 @@ public class UserController {
             return ResultUtils.error(ErrorCode.PARAMS_ERROR);
         }
         User user = userService.userLogin(userAccount, userPassword, request);
-        //System.out.println("登录成功，Session ID: " + request.getSession().getId());
-        //System.out.println("Session 中的用户信息: " + request.getSession().getAttribute(USER_LOGIN_STATE));
+        
+        // 设置Cookie
+        if (user != null) {
+            // 设置用户名Cookie
+            Cookie userAccountCookie = new Cookie("userAccount", userAccount);
+            // 7天过期
+            userAccountCookie.setMaxAge(7 * 24 * 60 * 60);
+            userAccountCookie.setPath("/");
+            response.addCookie(userAccountCookie);
+            
+            // 如果需要记住密码，可以设置密码Cookie（注意：实际项目中不应存储密码，这里仅作演示）
+            // Cookie passwordCookie = new Cookie("password", userPassword);
+            // passwordCookie.setMaxAge(7 * 24 * 60 * 60);
+            // passwordCookie.setPath("/");
+            // response.addCookie(passwordCookie);
+            
+            // 设置记住我Cookie
+            Cookie rememberMeCookie = new Cookie("rememberMe", "true");
+            rememberMeCookie.setMaxAge(7 * 24 * 60 * 60);
+            rememberMeCookie.setPath("/");
+            response.addCookie(rememberMeCookie);
+        }
+        
         return ResultUtils.success(user);
     }
 
@@ -103,10 +127,37 @@ public class UserController {
      * @return
      */
     @PostMapping("/logout")
-    public BaseResponse<Integer> userLogout(HttpServletRequest request) {
+    public BaseResponse<Integer> userLogout(HttpServletRequest request, HttpServletResponse response) {
         if (request == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
+        
+        // 清除Session
+        request.getSession().removeAttribute(USER_LOGIN_STATE);
+        
+        // 清除我们设置的Cookie
+        Cookie userAccountCookie = new Cookie("userAccount", null);
+        // 立即过期
+        userAccountCookie.setMaxAge(0);
+        userAccountCookie.setPath("/");
+        response.addCookie(userAccountCookie);
+        
+        Cookie rememberMeCookie = new Cookie("rememberMe", null);
+        rememberMeCookie.setMaxAge(0);
+        rememberMeCookie.setPath("/");
+        response.addCookie(rememberMeCookie);
+        
+        // 清除可能存在的用户名和密码Cookie
+        Cookie usernameCookie = new Cookie("username", null);
+        usernameCookie.setMaxAge(0);
+        usernameCookie.setPath("/");
+        response.addCookie(usernameCookie);
+        
+        Cookie passwordCookie = new Cookie("password", null);
+        passwordCookie.setMaxAge(0);
+        passwordCookie.setPath("/");
+        response.addCookie(passwordCookie);
+        
         int result = userService.userLogout(request);
         return ResultUtils.success(result);
     }
@@ -197,9 +248,6 @@ public class UserController {
      */
     @PostMapping("/update")
     public BaseResponse<Integer> updateUser(@RequestBody User user, HttpServletRequest request) {
- //      System.out.println("更新用户，Session ID: " + request.getSession().getId());
- //       System.out.println("Session 中的用户信息: " + request.getSession().getAttribute(USER_LOGIN_STATE));
- //       System.out.println("更新用户参数: " + user);
         //判断参数是否为空
         if (user == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
