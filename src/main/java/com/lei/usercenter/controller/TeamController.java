@@ -10,10 +10,7 @@ import com.lei.usercenter.model.domain.Team;
 import com.lei.usercenter.model.domain.User;
 import com.lei.usercenter.model.domain.UserTeam;
 import com.lei.usercenter.model.dto.TeamQuery;
-import com.lei.usercenter.model.request.TeamAddRequest;
-import com.lei.usercenter.model.request.TeamJoinRequest;
-import com.lei.usercenter.model.request.TeamQuitRequest;
-import com.lei.usercenter.model.request.TeamUpdateRequest;
+import com.lei.usercenter.model.request.*;
 import com.lei.usercenter.model.vo.TeamUserVO;
 import com.lei.usercenter.service.TeamService;
 import com.lei.usercenter.service.UserService;
@@ -77,18 +74,18 @@ public class TeamController {
 
 
     /**
-     * 删除队伍
-     * @param teamId
+     * 解散队伍
+     * @param teamDeleteRequest
      * @param request
      * @return
      */
     @PostMapping("/delete")
-    public BaseResponse<Boolean> deleteTeam(@RequestBody Long teamId, HttpServletRequest request) {
-        if(teamId <= 0){
+    public BaseResponse<Boolean> deleteTeam(@RequestBody TeamDeleteRequest teamDeleteRequest, HttpServletRequest request) {
+        if(teamDeleteRequest == null ){
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User logininUser = userService.getLoginUser(request);
-        boolean result = teamService.deleteTeam( teamId,logininUser);
+        boolean result = teamService.deleteTeam( teamDeleteRequest.getTeamId(),logininUser);
 
         if (!result){
             throw new BusinessException(ErrorCode.SYSTEM_ERROR,"删除数据失败");
