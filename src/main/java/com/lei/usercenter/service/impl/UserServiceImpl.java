@@ -9,6 +9,7 @@ import com.lei.usercenter.exception.BusinessException;
 import com.lei.usercenter.model.domain.User;
 import com.lei.usercenter.service.UserService;
 import com.lei.usercenter.mapper.UserMapper;
+import com.lei.usercenter.utils.AlgorithmUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,7 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -313,5 +311,59 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public boolean isAdmin(User loginUser) {
         return loginUser != null && loginUser.getUserRole() == ADMIN_ROLE;
+    }
+
+
+
+    /**
+     * 推荐匹配用户
+     * @param num
+     * @param loginUser
+     * @return
+     */
+    @Override
+    public List<User> matchUsers(long num, User loginUser) {
+//        这里我因为电脑内存问题，没有办法像鱼皮电脑那样可以存放100万数据，可以直接运行。所以我选择了运行5万条数据。
+//        不然的话会报 OOM（内存）的问题
+//        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+//        queryWrapper.last("limit 50000");
+//        List<User> userList = this.list(queryWrapper);
+//         或者用page分页查询，自己输入或默认数值，但这样匹配就有限制了
+//        List<User> userList = this.page(new Page<>(pageNum,pageSize),queryWrapper);
+//		这里查了所有用户，近100万条
+        List<User> userList = this.list();
+        String tags = loginUser.getTags();
+        Gson gson = new Gson();
+        List<String> tagList = gson.fromJson(tags, new TypeToken<List<String>>() {
+        }.getType());
+        System.out.println(tagList);
+        // 用户列表的下表 => 相似度
+        SortedMap<Integer, Long> indexDistanceMap = new TreeMap<>();
+        for (int i = 0; i <userList.size(); i++) {
+            User user = userList.get(i);
+            String userTags = user.getTags();
+            //无标签的
+            if (StringUtils.isBlank(userTags)){
+                continue;
+            }
+            List<String> userTagList = gson.fromJson(userTags, new TypeToken<List<String>>() {
+            }.getType());
+            //计算分数
+            long distance = AlgorithmUtils.minDistance(tagList, userTagList);
+            indexDistanceMap.put(i,distance);
+        }
+        //下面这个是打印前num个的id和分数
+        List<User> userListVo = new ArrayList<>();
+        int i = 0;
+        for (Map.Entry<Integer,Long> entry : indexDistanceMap.entrySet()){
+            if (i > num){
+                break;
+            }
+            User user = userList.get(entry.getKey());
+            System.out.println(user.getId() + ":" + entry.getKey() + ":" + entry.getValue());
+            userListVo.add(user);
+            i++;
+        }
+        return userListVo;
     }
 }
