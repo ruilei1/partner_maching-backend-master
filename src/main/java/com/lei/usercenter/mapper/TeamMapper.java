@@ -2,6 +2,7 @@ package com.lei.usercenter.mapper;
 
 import com.lei.usercenter.model.domain.Team;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
 
 /**
 * @author lei
@@ -9,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 * @createDate 2025-08-13 18:18:22
 * @Entity generator.domain.Team
 */
+@Mapper
 public interface TeamMapper extends BaseMapper<Team> {
 
 }

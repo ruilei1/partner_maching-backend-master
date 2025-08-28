@@ -55,6 +55,12 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
     private RedissonClient redissonClient;
 
 
+    /**
+     * 创建队伍
+     * @param team
+     * @param loginUser
+     * @return
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Long addTeam(Team team, User loginUser) {

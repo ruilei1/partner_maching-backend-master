@@ -12,7 +12,9 @@ import org.springframework.context.annotation.Configuration;
 public class MybatisPlusConfig {
 
     /**
-     * 新的分页插件，一级缓存和二级缓存遵循mybatis的缓存逻辑，需要设置MybatisConfiguration#useDeprecatedExecutor = false 避免缓存出现问题（该属性会在旧插件移除后一同移除）
+     * 新的分页插件，一级缓存和二级缓存遵循mybatis的缓存逻辑，
+     * 需要设置MybatisConfiguration#useDeprecatedExecutor = false
+     * 避免缓存出现问题（该属性会在旧插件移除后一同移除）
      */
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {

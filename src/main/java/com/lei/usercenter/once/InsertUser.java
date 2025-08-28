@@ -80,11 +80,11 @@ public class InsertUser {
     public void doConcurrencyInsertUser() {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        final int INSERT_SIZE = 100000;
+        final int INSERT_SIZE = 800000;
         // 分十组
         int j = 0;
         //批量插入数据的大小
-        int batchSize = 5000;
+        int batchSize = 10000;
         List<CompletableFuture<Void>> futureList = new ArrayList<>();
         // i 要根据数据量和插入批量来计算需要循环的次数。（鱼皮这里直接取了个值，会有问题,我这里随便写的）
         for (int i = 0; i < INSERT_SIZE / batchSize; i++) {

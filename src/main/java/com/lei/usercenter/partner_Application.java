@@ -1,6 +1,5 @@
 package com.lei.usercenter;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.dromara.x.file.storage.spring.EnableFileStorage;
@@ -13,7 +12,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @EnableFileStorage
 @SpringBootApplication
-@MapperScan("com.lei.usercenter.mapper")
 @EnableScheduling // 开启spring定时任务功能
 public class partner_Application {
     public static void main(String[] args) {
