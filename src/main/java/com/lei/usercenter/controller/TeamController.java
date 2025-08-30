@@ -160,6 +160,13 @@ public class TeamController {
                 team.setHasJoin(hasJoin);
             });
         } catch (Exception ignored) {}
+        //3、查询已加入的队伍的人数
+        QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
+        userTeamJoinQueryWrapper.in("teamId" , teamIdList);
+        List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
+        //队伍 id=> 加入这个队伍的用户表
+        Map<Long,List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
+        teamList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(),new ArrayList<>()).size()));
         return ResultUtils.success(teamList);
     }
 
@@ -178,6 +185,19 @@ public class TeamController {
         User logininUser = userService.getLoginUser(request);
         teamQuery.setUserId(logininUser.getId());
         List<TeamUserVO> teamList = teamService.listTeams(teamQuery,true);
+        // 如果没有创建的队伍，直接返回空列表
+        //避免无效SQL查询：当 teamList 为空时，直接返回结果，避免执行 teamId IN () 这种无效SQL
+        if (teamList.isEmpty()) {
+            return ResultUtils.success(teamList);
+        }
+        final List<Long> teamIdList = teamList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
+        userTeamJoinQueryWrapper.in("teamId", teamIdList);
+        List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
+        Map<Long, List<UserTeam>> teamIdUserTeamList = userTeamList.stream()
+                .collect(Collectors.groupingBy(UserTeam::getTeamId));
+        teamList.forEach(team -> team.setHasJoinNum(
+                teamIdUserTeamList.getOrDefault(team.getId(), new ArrayList<>()).size()));
         return ResultUtils.success(teamList);
     }
 
@@ -196,18 +216,41 @@ public class TeamController {
         QueryWrapper<UserTeam> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userId",logininUser.getId());
         List<UserTeam> userTeamlist = userTeamService.list(queryWrapper);
+
+        // 如果用户没有加入任何队伍，直接返回空列表
+        if (userTeamlist.isEmpty()) {
+            return ResultUtils.success(new ArrayList<>());
+        }
+
         // 取出不重复的队伍 id
-        //teamId userId
-        //1,2
-        //1,3
-        //2,3
-        //result
-        //1=> 2,3
-        //2=> 3
         Map<Long, List<UserTeam>> listMap = userTeamlist.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
         ArrayList<Long> idList = new ArrayList<>(listMap.keySet());
         teamQuery.setIdList(idList);
         List<TeamUserVO> teamList = teamService.listTeams(teamQuery,true);
+
+        final List<Long> teamIdList = teamList.stream().map(TeamUserVO::getId).collect(Collectors.toList());
+        // 2、判断当前用户是否已加入队伍
+        QueryWrapper<UserTeam> userTeamQueryWrapper = new QueryWrapper<>();
+        try {
+            User loginUser = userService.getLoginUser(request);
+            userTeamQueryWrapper.eq("userId", loginUser.getId());
+            userTeamQueryWrapper.in("teamId", teamIdList);
+            List<UserTeam> userTeamList = userTeamService.list(userTeamQueryWrapper);
+            // 已加入的队伍 id 集合
+            Set<Long> hasJoinTeamIdSet = userTeamList.stream().map(UserTeam::getTeamId).collect(Collectors.toSet());
+            teamList.forEach(team -> {
+                boolean hasJoin = hasJoinTeamIdSet.contains(team.getId());
+                team.setHasJoin(hasJoin);
+            });
+        } catch (Exception ignored) {}
+        //3、查询已加入的队伍的人数
+        QueryWrapper<UserTeam> userTeamJoinQueryWrapper = new QueryWrapper<>();
+        userTeamJoinQueryWrapper.in("teamId" , teamIdList);
+        List<UserTeam> userTeamList = userTeamService.list(userTeamJoinQueryWrapper);
+        //队伍 id=> 加入这个队伍的用户表
+        Map<Long,List<UserTeam>> teamIdUserTeamList = userTeamList.stream().collect(Collectors.groupingBy(UserTeam::getTeamId));
+        teamList.forEach(team -> team.setHasJoinNum(teamIdUserTeamList.getOrDefault(team.getId(),new ArrayList<>()).size()));
+        log.info(teamList.toString());
         return ResultUtils.success(teamList);
     }
 

@@ -17,14 +17,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public BaseResponse<?> businessExceptionHandler(BusinessException e) {
-        log.error("捕获到businessException异常: {}", e.getMessage(), e);
+        //log.error("捕获到businessException异常: {}", e.getMessage(), e);
         return ResultUtils.error(e.getCode(), e.getMessage(), e.getDescription());
     }
 
 
     @ExceptionHandler(RuntimeException.class)
     public BaseResponse<?> runtimeExceptionHandler(RuntimeException e) {
-        log.error("捕获到runtimeException异常", e);
+        //log.error("捕获到runtimeException异常", e);
         return ResultUtils.error(ErrorCode.SYSTEM_ERROR, e.getMessage(), "");
     }
 }
