@@ -186,8 +186,8 @@ public class TeamServiceImpl extends ServiceImpl<TeamMapper, Team>
             if(statusEnum == null){
                 statusEnum = TeamStatusEnum.PUBLIC;
             }
-            //是管理员或者是公开的可以访问反之无权限
-            if(!isAdmin && !statusEnum.equals(TeamStatusEnum.PUBLIC)){
+            //不是管理员，状态不是公开的，即无权限
+            if(!isAdmin && statusEnum.equals(TeamStatusEnum.PRIVATE)){
                 throw new BusinessException(ErrorCode.NO_AUTH);
             }
             queryWrapper.eq("status",statusEnum.getValue());
